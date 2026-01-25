@@ -1,0 +1,124 @@
+{
+  "providers": {
+    "claude": {
+      "name": "Claude",
+      "description": "Anthropic's Claude CLI",
+      "command": "claude",
+      "invocation": "claude -p --print \"{prompt}\"",
+      "detectCommand": "which claude",
+      "authCheck": "claude --version",
+      "strengths": ["reasoning", "analysis", "synthesis", "planning"],
+      "taskRouting": {
+        "plan-review": 1,
+        "code-review": 3,
+        "architecture": 1
+      },
+      "timeout": 120000
+    },
+    "copilot": {
+      "name": "Copilot",
+      "description": "GitHub Copilot CLI",
+      "command": "copilot",
+      "invocation": "copilot --prompt \"{prompt}\" --allow-all-tools",
+      "detectCommand": "which copilot",
+      "authCheck": "copilot --version",
+      "strengths": ["code-generation", "code-review", "github-integration"],
+      "taskRouting": {
+        "plan-review": 4,
+        "code-review": 2,
+        "architecture": 4
+      },
+      "timeout": 90000
+    },
+    "codex": {
+      "name": "Codex",
+      "description": "OpenAI Codex CLI",
+      "command": "codex",
+      "invocation": "codex exec \"{prompt}\"",
+      "detectCommand": "which codex",
+      "authCheck": "codex --version",
+      "strengths": ["code-analysis", "debugging", "implementation"],
+      "taskRouting": {
+        "plan-review": 2,
+        "code-review": 1,
+        "architecture": 2
+      },
+      "timeout": 120000
+    },
+    "gemini": {
+      "name": "Gemini",
+      "description": "Google Gemini CLI",
+      "command": "gemini",
+      "invocation": "gemini \"{prompt}\"",
+      "detectCommand": "which gemini",
+      "authCheck": "gemini --version",
+      "strengths": ["multimodal", "research", "broad-knowledge"],
+      "taskRouting": {
+        "plan-review": 3,
+        "code-review": 4,
+        "architecture": 3
+      },
+      "timeout": 90000
+    },
+    "ollama": {
+      "name": "Ollama",
+      "description": "Local LLM runner (privacy mode)",
+      "command": "ollama",
+      "invocation": "ollama run gpt-oss:20b \"{prompt}\"",
+      "detectCommand": "which ollama",
+      "authCheck": "ollama list",
+      "strengths": ["privacy", "offline", "local-execution"],
+      "taskRouting": {
+        "plan-review": 5,
+        "code-review": 5,
+        "architecture": 5
+      },
+      "timeout": 180000,
+      "flags": {
+        "privacy": true,
+        "local": true
+      }
+    }
+  },
+  "modes": {
+    "quick": {
+      "description": "Fast feedback with 2 best-match providers",
+      "providerCount": 2,
+      "selectionStrategy": "task-routing"
+    },
+    "full": {
+      "description": "Comprehensive review with all available providers",
+      "providerCount": "all",
+      "selectionStrategy": "all-available"
+    },
+    "privacy": {
+      "description": "Local-only execution, no data leaves machine",
+      "providerCount": 1,
+      "selectionStrategy": "privacy-only",
+      "requiredFlags": ["privacy"]
+    }
+  },
+  "taskRouting": {
+    "plan-review": {
+      "description": "Review implementation plans",
+      "preferred": ["claude", "codex"],
+      "fallback": ["gemini"]
+    },
+    "code-review": {
+      "description": "Review code changes",
+      "preferred": ["codex", "copilot"],
+      "fallback": ["claude"]
+    },
+    "architecture": {
+      "description": "Architecture and design decisions",
+      "preferred": ["claude", "codex", "gemini"],
+      "fallback": ["copilot"]
+    }
+  },
+  "defaults": {
+    "mode": "quick",
+    "minQuorum": 2,
+    "timeoutMs": 120000,
+    "parallelExecution": true
+  }
+}
