@@ -50,10 +50,15 @@ No endless debate. Just actionable guidance.
 Get your first council review in **5 minutes**:
 
 ```bash
-# 1. Install
-git clone https://github.com/username/llm-cli-council.git
+# 1. Install (choose one method)
+
+# Method A: Git clone
+git clone https://github.com/GuitaristForEver/llm-cli-council.git
 cd llm-cli-council
 ./install.sh
+
+# Method B: One-line install
+curl -fsSL https://raw.githubusercontent.com/GuitaristForEver/llm-cli-council/main/install.sh | bash
 
 # 2. Detect your LLM CLI tools
 /llm-cli-council:setup
@@ -72,7 +77,7 @@ That's it! You'll get synthesized feedback from multiple AI perspectives.
 
 ```bash
 # Clone repository
-git clone https://github.com/username/llm-cli-council.git
+git clone https://github.com/GuitaristForEver/llm-cli-council.git
 cd llm-cli-council
 
 # Run installer
@@ -85,7 +90,7 @@ cd llm-cli-council
 ### Method 2: One-Line Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/username/llm-cli-council/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/GuitaristForEver/llm-cli-council/main/install.sh | bash
 ```
 
 ### Method 3: Custom Installation Path
@@ -438,7 +443,7 @@ We welcome contributions! Here's how you can help:
 
 ```bash
 # Clone repository
-git clone https://github.com/username/llm-cli-council.git
+git clone https://github.com/GuitaristForEver/llm-cli-council.git
 cd llm-cli-council
 
 # Install development version
