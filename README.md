@@ -7,6 +7,8 @@ A Claude Code skill that orchestrates multiple LLM command-line tools (Claude, C
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Platform](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-blue)](https://github.com/username/llm-cli-council)
 
+> **Inspired by:** [karpathy/llm-council](https://github.com/karpathy/llm-council) for the council orchestration concept and [jarrodwatts/claude-delegator](https://github.com/jarrodwatts/claude-delegator) for multi-model delegation patterns.
+
 ---
 
 ## Why Use a Council?
