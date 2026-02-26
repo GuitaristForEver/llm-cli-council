@@ -27,7 +27,55 @@ function ensureDirExists(dirPath) {
   fs.mkdirSync(dirPath, { recursive: true });
 }
 
-// Phase 2 Plan 02-02 adds: FILE_MAP, copyFiles(), chmodExec()
+/**
+ * Map of plugin files/dirs to install.
+ * src: path relative to package root (where install.js lives, i.e., __dirname + '/..')
+ * dest: path relative to claudeDir
+ * type: 'dir' copies entire directory recursively; 'file' copies single file
+ */
+const FILE_MAP = [
+  { src: 'skills',                dest: 'skills',               type: 'dir'  },
+  { src: 'lib',                   dest: 'lib',                  type: 'dir'  },
+  { src: 'prompts',               dest: 'prompts',              type: 'dir'  },
+  { src: 'rules',                 dest: 'rules',                type: 'dir'  },
+  { src: 'config/providers.json', dest: 'config/providers.json', type: 'file' },
+];
+
+/**
+ * Copy all plugin files to claudeDir.
+ * @param {string} claudeDir - Target base directory
+ * @param {boolean} dryRun   - If true, log what would happen without copying
+ * @returns {string[]}       - List of files/dirs installed (for progress reporting)
+ */
+function copyFiles(claudeDir, dryRun) {
+  const pkgRoot = path.join(__dirname, '..');
+  const installed = [];
+
+  for (const entry of FILE_MAP) {
+    const srcPath  = path.join(pkgRoot, entry.src);
+    const destPath = path.join(claudeDir, entry.dest);
+
+    if (dryRun) {
+      installed.push(destPath);
+      continue;
+    }
+
+    // Ensure parent directory exists
+    ensureDirExists(path.dirname(destPath));
+
+    if (entry.type === 'dir') {
+      // fs.cpSync with recursive:true (Node 18+) — do NOT hand-roll recursive copy
+      fs.cpSync(srcPath, destPath, { recursive: true });
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+
+    installed.push(destPath);
+  }
+
+  return installed;
+}
+
 // Phase 2 Plan 02-03 adds: parseArgs(), confirm(), main()
 
 if (require.main === module) {
