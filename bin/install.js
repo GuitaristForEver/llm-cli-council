@@ -100,7 +100,39 @@ function chmodExec(claudeDir, dryRun) {
   }
 }
 
-// Phase 2 Plan 02-03 adds: parseArgs(), confirm(), main()
+/**
+ * Parse process.argv for supported flags.
+ * @returns {{ dryRun: boolean, yes: boolean, help: boolean }}
+ */
+function parseArgs(argv) {
+  return {
+    dryRun: argv.includes('--dry-run'),
+    yes:    argv.includes('--yes') || argv.includes('-y'),
+    help:   argv.includes('--help') || argv.includes('-h'),
+  };
+}
+
+/**
+ * Print usage information and exit.
+ */
+function printHelp() {
+  const pkg = require('../package.json');
+  console.log('');
+  console.log('llm-cli-council v' + pkg.version + ' — installer');
+  console.log('');
+  console.log('Usage:');
+  console.log('  npx llm-cli-council [options]');
+  console.log('');
+  console.log('Options:');
+  console.log('  --dry-run   Show what would be installed without installing');
+  console.log('  --yes, -y   Skip confirmation prompt');
+  console.log('  --help, -h  Show this help message');
+  console.log('');
+  console.log('Environment:');
+  console.log('  CLAUDE_DIR          Override install base directory');
+  console.log('  CLAUDE_SKILLS_DIR   Override skills directory (parent used as base)');
+  console.log('');
+}
 
 if (require.main === module) {
   // Entry point — full logic in Plan 02-03
