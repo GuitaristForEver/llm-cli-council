@@ -35,3 +35,6 @@ test-results/
 
 # Local configuration (not the template)
 local-config.json
+
+# Planning files (local context, not for repo)
+.planning/
