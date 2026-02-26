@@ -1,0 +1,46 @@
+{
+  "name": "llm-cli-council",
+  "version": "1.0.0",
+  "description": "Get diverse AI perspectives on your code and plans via multiple LLM CLIs — orchestrates Claude, GitHub Copilot, Codex, Gemini, and Ollama as a council",
+  "bin": {
+    "llm-cli-council": "bin/install.js"
+  },
+  "files": [
+    "bin",
+    "skills",
+    "lib",
+    "prompts",
+    "rules",
+    "config",
+    ".claude-plugin"
+  ],
+  "keywords": [
+    "claude",
+    "claude-code",
+    "llm",
+    "code-review",
+    "copilot",
+    "codex",
+    "gemini",
+    "ollama",
+    "claude-plugin",
+    "ai-council"
+  ],
+  "author": "GuitaristForEver",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/GuitaristForEver/llm-cli-council.git"
+  },
+  "homepage": "https://github.com/GuitaristForEver/llm-cli-council#readme",
+  "bugs": {
+    "url": "https://github.com/GuitaristForEver/llm-cli-council/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "test": "bash tests/test-setup.sh",
+    "prepublishOnly": "npm test"
+  }
+}
