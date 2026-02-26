@@ -1,5 +1,5 @@
 ---
-name: review-code
+name: llm-cli-council:review-code
 description: Get council review of code changes from multiple LLM providers
 invocable: true
 ---
@@ -78,7 +78,7 @@ Based on mode and task routing for `code-review`:
 ### Step 4: Build Review Prompts
 
 For each selected provider:
-1. Load `prompts/code-review.md` template
+1. Load `${CLAUDE_PLUGIN_ROOT}/prompts/code-review.md` template
 2. Substitute `{CODE_CONTENT}` with diff/code
 3. Substitute `{FILE_LIST}` with affected files
 4. Apply provider-specific prefix adjustments

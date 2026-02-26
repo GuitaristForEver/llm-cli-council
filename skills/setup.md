@@ -1,5 +1,5 @@
 ---
-name: setup
+name: llm-cli-council:setup
 description: Detect and configure available LLM CLIs for the council
 invocable: true
 ---
@@ -45,7 +45,7 @@ Before writing config, initialize path variables:
 
 ```bash
 # Source platform utilities
-source "${SKILL_DIR}/lib/platform-utils.sh"
+source "${CLAUDE_PLUGIN_ROOT}/lib/platform-utils.sh"
 
 # Path resolution
 COUNCIL_CONFIG_DIR="${CLAUDE_COUNCIL_CONFIG_DIR:-${CLAUDE_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/claude}/council}"
@@ -105,7 +105,33 @@ Configuration saved to: $COUNCIL_CONFIG_FILE
 Run /llm-cli-council:status to view current configuration.
 ```
 
-### Step 5: Handle Missing Providers
+### Step 5: Install Global Rules
+
+For proactive delegation checking to work, copy the plugin rules to Claude's global rules directory:
+
+```bash
+# Define target directory
+RULES_TARGET_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/rules/delegator"
+
+# Create directory if needed
+ensure_dir "$RULES_TARGET_DIR"
+
+# Copy rules from plugin to global location
+cp -r "${CLAUDE_PLUGIN_ROOT}/rules/"* "$RULES_TARGET_DIR/"
+
+# Confirm installation
+echo "✓ Global delegation rules installed to: $RULES_TARGET_DIR"
+```
+
+This enables Claude to automatically check for delegation triggers on every message without needing to invoke a skill.
+
+**What gets installed:**
+- `orchestration.md` - Multi-LLM coordination rules
+- `triggers.md` - When to delegate automatically
+- `delegation-format.md` - How to format delegation prompts
+- `model-selection.md` - Which expert for which task
+
+### Step 6: Handle Missing Providers
 
 If a provider is not found or not authenticated:
 
@@ -126,8 +152,9 @@ Copilot      AUTH ERROR  Not logged in         copilot auth login
 
 After successful setup:
 1. Council configuration is stored persistently
-2. Commands can auto-detect mode based on available providers
-3. Run `/llm-cli-council:review-plan` to test the council
+2. Global delegation rules are active (proactive behavior)
+3. Commands can auto-detect mode based on available providers
+4. Run `/llm-cli-council:review-plan` to test the council
 
 ## Re-running Setup
 

@@ -1,5 +1,5 @@
 ---
-name: uninstall
+name: llm-cli-council:uninstall
 description: Remove council configuration and optionally the skill files
 invocable: true
 ---
@@ -33,8 +33,9 @@ LLM CLI Council Uninstall
 This will remove:
 • Configuration: $COUNCIL_CONFIG_FILE
 • Logs (if any): $COUNCIL_LOG_DIR
+• Global delegation rules: ~/.claude/rules/delegator/
 
-The skill files will remain unless --full is specified.
+The plugin files will remain (use 'claude /plugin uninstall' to remove).
 
 Proceed with uninstall? [y/N]
 ```
@@ -46,23 +47,37 @@ rm -f $COUNCIL_CONFIG_FILE
 rm -rf $COUNCIL_LOG_DIR
 ```
 
-### Step 3: Full Uninstall (if --full)
+### Step 3: Remove Global Rules
+
+Remove the delegation rules from Claude's global rules directory:
+
+```bash
+# Define rules directory
+RULES_TARGET_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/rules/delegator"
+
+# Remove rules if they exist
+if [ -d "$RULES_TARGET_DIR" ]; then
+  rm -rf "$RULES_TARGET_DIR"
+  echo "✓ Removed global delegation rules from: $RULES_TARGET_DIR"
+else
+  echo "• No global rules found (already removed or never installed)"
+fi
+```
+
+This removes the proactive delegation checking behavior. After uninstall, Claude will no longer automatically check for delegation triggers.
+
+### Step 4: Full Uninstall (if --full)
 
 ```
 Full uninstall requested.
 
-This will ALSO remove:
-• Skill directory: $SKILLS_DIR/llm-cli-council/
+Note: For plugin-based installations, use:
+  claude /plugin uninstall llm-cli-council
 
-Are you sure? This cannot be undone. [y/N]
+This command only removes configuration and rules, not the plugin itself.
 ```
 
-If confirmed:
-```bash
-rm -rf $SKILLS_DIR/llm-cli-council/
-```
-
-### Step 4: Confirm Completion
+### Step 5: Confirm Completion
 
 ```
 LLM CLI Council - Uninstalled
@@ -71,14 +86,16 @@ LLM CLI Council - Uninstalled
 Removed:
 ✓ Configuration file
 ✓ Log directory
-[✓ Skill files (--full)]
+✓ Global delegation rules
+
+The plugin files remain installed. To completely remove:
+  claude /plugin uninstall llm-cli-council
 
 The underlying CLI tools (claude, codex, copilot, etc.)
 were NOT modified. They remain available for direct use.
 
 To reinstall:
-1. Copy skill files to $SKILLS_DIR/llm-cli-council/
-2. Run /llm-cli-council:setup
+  /llm-cli-council:setup
 ```
 
 ---
@@ -91,12 +108,9 @@ To reinstall:
 |------|------|-------------|
 | Config | `$COUNCIL_CONFIG_FILE` | Provider settings, preferences |
 | Logs | `$COUNCIL_LOG_DIR` | Review history (if logging enabled) |
+| Rules | `~/.claude/rules/delegator/` | Global delegation rules |
 
-### Full Uninstall (--full)
-
-| Item | Path | Description |
-|------|------|-------------|
-| Skill | `$SKILLS_DIR/llm-cli-council/` | All skill files |
+**Note:** Plugin files remain. Use `claude /plugin uninstall llm-cli-council` to remove.
 
 ---
 

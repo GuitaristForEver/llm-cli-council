@@ -1,0 +1,61 @@
+{
+  "name": "llm-cli-council",
+  "version": "1.0.0",
+  "description": "Get diverse AI perspectives on implementation plans and code reviews by orchestrating multiple LLM CLIs (Claude, Copilot, Codex, Gemini, Ollama) through a council approach",
+  "author": {
+    "name": "GuitaristForEver",
+    "url": "https://github.com/GuitaristForEver/llm-cli-council"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GuitaristForEver/llm-cli-council.git"
+  },
+  "license": "MIT",
+  "keywords": [
+    "llm",
+    "council",
+    "code-review",
+    "plan-review",
+    "multi-model",
+    "delegation",
+    "codex",
+    "copilot",
+    "gemini",
+    "ollama"
+  ],
+  "skills": [
+    {
+      "name": "llm-cli-council",
+      "path": "./skills/llm-cli-council.md",
+      "description": "Main orchestration skill for multi-LLM council"
+    },
+    {
+      "name": "llm-cli-council:setup",
+      "path": "./skills/setup.md",
+      "description": "Detect and configure available LLM CLIs"
+    },
+    {
+      "name": "llm-cli-council:status",
+      "path": "./skills/status.md",
+      "description": "Show council configuration and provider status"
+    },
+    {
+      "name": "llm-cli-council:review-plan",
+      "path": "./skills/review-plan.md",
+      "description": "Get council review of implementation plans"
+    },
+    {
+      "name": "llm-cli-council:review-code",
+      "path": "./skills/review-code.md",
+      "description": "Get council review of code changes"
+    },
+    {
+      "name": "llm-cli-council:uninstall",
+      "path": "./skills/uninstall.md",
+      "description": "Remove council configuration and rules"
+    }
+  ],
+  "engines": {
+    "claude-code": ">=0.1.0"
+  }
+}

@@ -1,5 +1,5 @@
 ---
-name: review-plan
+name: llm-cli-council:review-plan
 description: Get council review of an implementation plan from multiple LLM providers
 invocable: true
 ---
@@ -47,7 +47,7 @@ Priority order:
 Based on mode:
 
 **quick (default):**
-- Read `config/providers.json` task routing for `plan-review`
+- Read `${CLAUDE_PLUGIN_ROOT}/config/providers.json` task routing for `plan-review`
 - Select top 2 available providers by routing priority
 - Preferred: Claude, Codex. Fallback: Gemini
 
@@ -61,7 +61,7 @@ Based on mode:
 ### Step 4: Build Review Prompts
 
 For each selected provider:
-1. Load `prompts/plan-review.md` template
+1. Load `${CLAUDE_PLUGIN_ROOT}/prompts/plan-review.md` template
 2. Substitute `{PLAN_CONTENT}` with actual plan
 3. Apply provider-specific prefix adjustments
 4. Prepare CLI invocation command
@@ -91,7 +91,7 @@ Parse each provider response:
 
 ### Step 7: Chairman Synthesis
 
-1. Load `prompts/chairman-synthesis.md`
+1. Load `${CLAUDE_PLUGIN_ROOT}/prompts/chairman-synthesis.md`
 2. Format all provider reviews into synthesis prompt
 3. Claude (as Chairman) synthesizes into unified guidance
 4. Apply anti-paralysis rules (max 5 recommendations, clear verdict)

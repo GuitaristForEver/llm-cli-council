@@ -39,5 +39,8 @@ local-config.json
 # Planning files (local context, not for repo)
 .planning/
 
+# Claude Code local agent state (session files, not project files)
+.claude/
+
 # npm pack output
 *.tgz

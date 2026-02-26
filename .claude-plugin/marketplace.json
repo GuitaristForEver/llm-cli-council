@@ -1,0 +1,15 @@
+{
+  "name": "llm-cli-council-dev",
+  "owner": {
+    "name": "GuitaristForEver"
+  },
+  "description": "Development marketplace for testing llm-cli-council plugin",
+  "plugins": [
+    {
+      "name": "llm-cli-council",
+      "source": "./",
+      "version": "1.0.0",
+      "description": "Get diverse AI perspectives on implementation plans and code reviews"
+    }
+  ]
+}
