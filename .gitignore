@@ -38,3 +38,6 @@ local-config.json
 
 # Planning files (local context, not for repo)
 .planning/
+
+# npm pack output
+*.tgz
