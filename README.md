@@ -50,17 +50,13 @@ No endless debate. Just actionable guidance.
 Get your first council review in **5 minutes**:
 
 ```bash
-# 1. Install (choose one method)
+# 1. Install the plugin
+claude /plugin marketplace add GuitaristForEver/llm-cli-council
+claude /plugin install llm-cli-council
 
-# Method A: Git clone
-git clone https://github.com/GuitaristForEver/llm-cli-council.git
-cd llm-cli-council
-./install.sh
+# Restart Claude Code after installation
 
-# Method B: One-line install
-curl -fsSL https://raw.githubusercontent.com/GuitaristForEver/llm-cli-council/main/install.sh | bash
-
-# 2. Detect your LLM CLI tools
+# 2. Setup and detect your LLM CLI tools
 /llm-cli-council:setup
 
 # 3. Review a plan
@@ -73,45 +69,27 @@ That's it! You'll get synthesized feedback from multiple AI perspectives.
 
 ## Installation
 
-### Method 1: Git Clone (Recommended)
+```bash
+npx llm-cli-council
+```
+
+This will detect your Claude Code directory and install the plugin files automatically.
+
+**Options:**
+- `npx llm-cli-council --dry-run` — preview what will be installed
+- `npx llm-cli-council --yes` — skip the confirmation prompt
+
+**Manual install:** If you prefer, copy files directly:
 
 ```bash
-# Clone repository
-git clone https://github.com/GuitaristForEver/llm-cli-council.git
+git clone https://github.com/GuitaristForEver/llm-cli-council
 cd llm-cli-council
-
-# Run installer
-./install.sh
-
-# Verify installation
-/llm-cli-council:status
+cp -r skills/* ~/.claude/skills/
+cp -r lib ~/.claude/lib/
+cp -r prompts ~/.claude/prompts/
+cp -r rules ~/.claude/rules/
+cp config/providers.json ~/.claude/config/
 ```
-
-### Method 2: One-Line Install
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/GuitaristForEver/llm-cli-council/main/install.sh | bash
-```
-
-### Method 3: Custom Installation Path
-
-```bash
-# Install to specific directory
-./install.sh --skills-dir ~/.local/share/claude/skills
-
-# With custom config directory
-CLAUDE_COUNCIL_CONFIG_DIR=~/my-config ./install.sh
-```
-
-### Installation Options
-
-| Flag | Description |
-|------|-------------|
-| `--yes`, `-y` | Auto-confirm all prompts |
-| `--skills-dir DIR` | Install to custom skills directory |
-| `--dry-run` | Preview installation without making changes |
-| `--verbose`, `-v` | Show detailed installation progress |
-| `--help`, `-h` | Display help message |
 
 ---
 
@@ -446,17 +424,21 @@ We welcome contributions! Here's how you can help:
 git clone https://github.com/GuitaristForEver/llm-cli-council.git
 cd llm-cli-council
 
-# Install development version
-./install.sh --skills-dir ~/.claude/skills-dev
+# Install as local plugin
+claude /plugin marketplace add .
+claude /plugin install llm-cli-council@llm-cli-council-dev
 
-# Make changes to src/
+# Restart Claude Code
+
+# Make changes to skills/, prompts/, or rules/
 
 # Test your changes
-/llm-cli-council:status
+/llm-cli-council:setup
 /llm-cli-council:review-plan test/fixtures/sample-plan.md
 
-# Run tests (if available)
-./tests/test-setup.sh
+# To reload changes: uninstall and reinstall
+claude /plugin uninstall llm-cli-council@llm-cli-council-dev
+claude /plugin install llm-cli-council@llm-cli-council-dev
 ```
 
 ### Adding a New Provider
