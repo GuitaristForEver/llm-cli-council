@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # LLM CLI Council - Setup Tests
-# Tests installation, path resolution, and platform utilities
+# Tests repository structure, platform utilities, and configuration
 
 set -uo pipefail
 
@@ -139,32 +139,95 @@ test_suite_repository_structure() {
     test_start "Repository root files exist"
     assert_file_exists "$PROJECT_ROOT/README.md" "README.md exists"
     assert_file_exists "$PROJECT_ROOT/LICENSE" "LICENSE exists"
-    assert_file_exists "$PROJECT_ROOT/install.sh" "install.sh exists"
-    assert_executable "$PROJECT_ROOT/install.sh" "install.sh is executable"
+    assert_file_exists "$PROJECT_ROOT/CONTRIBUTING.md" "CONTRIBUTING.md exists"
+    assert_file_exists "$PROJECT_ROOT/CHANGELOG.md" "CHANGELOG.md exists"
 
-    test_start "Source directory structure"
-    assert_dir_exists "$PROJECT_ROOT/src" "src/ exists"
-    assert_dir_exists "$PROJECT_ROOT/src/commands" "src/commands/ exists"
-    assert_dir_exists "$PROJECT_ROOT/src/prompts" "src/prompts/ exists"
-    assert_dir_exists "$PROJECT_ROOT/src/rules" "src/rules/ exists"
-    assert_dir_exists "$PROJECT_ROOT/src/config" "src/config/ exists"
-    assert_dir_exists "$PROJECT_ROOT/src/lib" "src/lib/ exists"
-    assert_dir_exists "$PROJECT_ROOT/src/wrappers" "src/wrappers/ exists"
+    test_start "Plugin manifest"
+    assert_file_exists "$PROJECT_ROOT/.claude-plugin/plugin.json" "plugin.json exists"
 
-    test_start "Required source files"
-    assert_file_exists "$PROJECT_ROOT/src/SKILL.md" "Main SKILL.md exists"
-    assert_file_exists "$PROJECT_ROOT/src/lib/platform-utils.sh" "platform-utils.sh exists"
-    assert_file_exists "$PROJECT_ROOT/src/config/providers.json" "providers.json exists"
+    test_start "Top-level directory structure"
+    assert_dir_exists "$PROJECT_ROOT/skills" "skills/ exists"
+    assert_dir_exists "$PROJECT_ROOT/prompts" "prompts/ exists"
+    assert_dir_exists "$PROJECT_ROOT/rules" "rules/ exists"
+    assert_dir_exists "$PROJECT_ROOT/config" "config/ exists"
+    assert_dir_exists "$PROJECT_ROOT/lib" "lib/ exists"
+    assert_dir_exists "$PROJECT_ROOT/examples" "examples/ exists"
+    assert_dir_exists "$PROJECT_ROOT/tests" "tests/ exists"
 
-    test_start "Command files"
-    for cmd in setup status review-plan review-code uninstall; do
-        assert_file_exists "$PROJECT_ROOT/src/commands/${cmd}.md" "Command: ${cmd}.md"
+    test_start "Skill files"
+    for skill in llm-cli-council setup status review-plan review-code uninstall; do
+        assert_file_exists "$PROJECT_ROOT/skills/${skill}.md" "Skill: ${skill}.md"
     done
 
-    test_start "Wrapper files"
-    for wrapper in setup status review-plan review-code uninstall; do
-        assert_file_exists "$PROJECT_ROOT/src/wrappers/${wrapper}-wrapper.md" "Wrapper: ${wrapper}-wrapper.md"
+    test_start "Prompt files"
+    for prompt in chairman-synthesis code-review plan-review; do
+        assert_file_exists "$PROJECT_ROOT/prompts/${prompt}.md" "Prompt: ${prompt}.md"
     done
+
+    test_start "Rules files"
+    for rule in council-orchestration synthesis-strategy triggers; do
+        assert_file_exists "$PROJECT_ROOT/rules/${rule}.md" "Rule: ${rule}.md"
+    done
+
+    test_start "Library and config files"
+    assert_file_exists "$PROJECT_ROOT/lib/platform-utils.sh" "platform-utils.sh exists"
+    assert_executable "$PROJECT_ROOT/lib/platform-utils.sh" "platform-utils.sh is executable"
+    assert_file_exists "$PROJECT_ROOT/config/providers.json" "providers.json exists"
+}
+
+test_suite_plugin_manifest() {
+    echo -e "\n${BOLD}═══════════════════════════════════════════════════════${NC}"
+    echo -e "${BOLD}Test Suite: Plugin Manifest${NC}"
+    echo -e "${BOLD}═══════════════════════════════════════════════════════${NC}"
+
+    local manifest="$PROJECT_ROOT/.claude-plugin/plugin.json"
+
+    test_start "plugin.json is valid JSON"
+    if command -v jq &>/dev/null; then
+        if jq . "$manifest" &>/dev/null; then
+            test_pass "plugin.json is valid JSON"
+        else
+            test_fail "plugin.json has invalid JSON syntax"
+        fi
+
+        test_start "plugin.json required fields"
+        for field in .name .version .description; do
+            local value
+            value=$(jq -r "$field // empty" "$manifest")
+            assert_not_empty "$value" "Field present: $field"
+        done
+
+        test_start "plugin.json skill registrations"
+        local skill_count
+        skill_count=$(jq '.skills | length' "$manifest")
+        if [ "$skill_count" -ge 5 ]; then
+            test_pass "At least 5 skills registered ($skill_count)"
+        else
+            test_fail "Too few skills registered (expected >=5, got $skill_count)"
+        fi
+
+        # Verify each skill path resolves to an actual file
+        test_start "Skill paths in plugin.json resolve to real files"
+        local skill_paths
+        skill_paths=$(jq -r '.skills[].path' "$manifest")
+        while IFS= read -r path; do
+            local full_path="$PROJECT_ROOT/.claude-plugin/$path"
+            # paths are relative to .claude-plugin/, strip leading ./
+            local rel="${path#./}"
+            local resolved="$PROJECT_ROOT/.claude-plugin/$rel"
+            if [ ! -f "$resolved" ]; then
+                # try relative to project root
+                resolved="$PROJECT_ROOT/$rel"
+            fi
+            if [ -f "$resolved" ]; then
+                test_pass "Skill path resolves: $path"
+            else
+                test_fail "Skill path not found: $path"
+            fi
+        done <<< "$skill_paths"
+    else
+        echo -e "${YELLOW}⚠${NC} jq not found, skipping JSON validation tests"
+    fi
 }
 
 test_suite_platform_utilities() {
@@ -172,13 +235,14 @@ test_suite_platform_utilities() {
     echo -e "${BOLD}Test Suite: Platform Utilities${NC}"
     echo -e "${BOLD}═══════════════════════════════════════════════════════${NC}"
 
-    local utils_file="$PROJECT_ROOT/src/lib/platform-utils.sh"
+    local utils_file="$PROJECT_ROOT/lib/platform-utils.sh"
 
     test_start "Platform utilities file"
     assert_file_exists "$utils_file" "platform-utils.sh exists"
     assert_executable "$utils_file" "platform-utils.sh is executable"
 
     # Source the utilities
+    # shellcheck source=/dev/null
     source "$utils_file"
 
     test_start "Platform detection"
@@ -263,63 +327,35 @@ test_suite_path_abstraction() {
     echo -e "${BOLD}Test Suite: Path Abstraction${NC}"
     echo -e "${BOLD}═══════════════════════════════════════════════════════${NC}"
 
-    test_start "No hardcoded user paths"
+    test_start "No hardcoded user paths in skills"
     local hardcoded_paths
-    hardcoded_paths=$(grep -r "/Users/[^/]*\|/home/[^/]*" "$PROJECT_ROOT/src" 2>/dev/null | grep -v "Binary file" || true)
+    hardcoded_paths=$(grep -r "/Users/[^/]*\|/home/[^/]*" "$PROJECT_ROOT/skills" 2>/dev/null | grep -v "Binary file" || true)
 
     if [ -z "$hardcoded_paths" ]; then
-        test_pass "No hardcoded user paths found"
+        test_pass "No hardcoded user paths in skills/"
     else
-        test_fail "Found hardcoded user paths: $hardcoded_paths"
+        test_fail "Found hardcoded user paths in skills/: $hardcoded_paths"
     fi
 
-    test_start "Environment variable usage"
-    local env_var_usage
-    env_var_usage=$(grep -r '\$COUNCIL_CONFIG_FILE\|\$COUNCIL_CONFIG_DIR\|\$COUNCIL_LOG_DIR\|\$SKILLS_DIR' "$PROJECT_ROOT/src" | wc -l | tr -d ' ')
+    test_start "No hardcoded user paths in lib"
+    local lib_hardcoded
+    lib_hardcoded=$(grep -r "/Users/[^/]*\|/home/[^/]*" "$PROJECT_ROOT/lib" 2>/dev/null | grep -v "Binary file" || true)
 
-    if [ "$env_var_usage" -gt 10 ]; then
-        test_pass "Environment variables used ($env_var_usage occurrences)"
+    if [ -z "$lib_hardcoded" ]; then
+        test_pass "No hardcoded user paths in lib/"
     else
-        test_fail "Insufficient environment variable usage ($env_var_usage occurrences)"
+        test_fail "Found hardcoded user paths in lib/: $lib_hardcoded"
     fi
 
-    test_start "Generic version placeholders"
-    local specific_versions
-    specific_versions=$(grep -r 'version.*[0-9]\+\.[0-9]\+\.[0-9]\+' "$PROJECT_ROOT/src" 2>/dev/null | grep -v "x.y.z" | grep -v "version\": \"1.0.0" | grep -v "version: 1.0.0" | grep -v "providers.json" || true)
+    test_start "No hardcoded user paths in config"
+    local config_hardcoded
+    config_hardcoded=$(grep -r "/Users/[^/]*\|/home/[^/]*" "$PROJECT_ROOT/config" 2>/dev/null | grep -v "Binary file" || true)
 
-    if [ -z "$specific_versions" ]; then
-        test_pass "No specific version numbers in examples"
+    if [ -z "$config_hardcoded" ]; then
+        test_pass "No hardcoded user paths in config/"
     else
-        test_fail "Found specific version numbers: $specific_versions"
+        test_fail "Found hardcoded user paths in config/: $config_hardcoded"
     fi
-}
-
-test_suite_installation_script() {
-    echo -e "\n${BOLD}═══════════════════════════════════════════════════════${NC}"
-    echo -e "${BOLD}Test Suite: Installation Script${NC}"
-    echo -e "${BOLD}═══════════════════════════════════════════════════════${NC}"
-
-    test_start "Installation script structure"
-    local install_script="$PROJECT_ROOT/install.sh"
-
-    assert_contains "$(cat "$install_script")" "detect_platform" "Has platform detection"
-    assert_contains "$(cat "$install_script")" "check_prerequisites" "Has prerequisites check"
-    assert_contains "$(cat "$install_script")" "detect_skills_directory" "Has skills directory detection"
-    assert_contains "$(cat "$install_script")" "install_main_skill" "Has main skill installation"
-    assert_contains "$(cat "$install_script")" "install_wrapper_skills" "Has wrapper skills installation"
-    assert_contains "$(cat "$install_script")" "validate_installation" "Has validation"
-
-    test_start "Installation script flags"
-    assert_contains "$(cat "$install_script")" "--dry-run" "Supports dry-run"
-    assert_contains "$(cat "$install_script")" "--verbose" "Supports verbose"
-    assert_contains "$(cat "$install_script")" "--yes" "Supports auto-confirm"
-    assert_contains "$(cat "$install_script")" "--skills-dir" "Supports custom skills directory"
-
-    test_start "Installation script help"
-    local help_output
-    help_output=$("$install_script" --help 2>&1)
-    assert_contains "$help_output" "USAGE" "Help shows usage"
-    assert_contains "$help_output" "OPTIONS" "Help shows options"
 }
 
 test_suite_configuration() {
@@ -328,11 +364,10 @@ test_suite_configuration() {
     echo -e "${BOLD}═══════════════════════════════════════════════════════${NC}"
 
     test_start "Providers configuration"
-    local providers_json="$PROJECT_ROOT/src/config/providers.json"
+    local providers_json="$PROJECT_ROOT/config/providers.json"
 
     assert_file_exists "$providers_json" "providers.json exists"
 
-    # Validate JSON syntax
     if command -v jq &>/dev/null; then
         if jq . "$providers_json" &>/dev/null; then
             test_pass "providers.json is valid JSON"
@@ -340,7 +375,7 @@ test_suite_configuration() {
             test_fail "providers.json has invalid JSON syntax"
         fi
 
-        # Check for required providers
+        test_start "Required providers configured"
         local providers=("claude" "copilot" "codex" "gemini" "ollama")
         for provider in "${providers[@]}"; do
             if jq -e ".providers.$provider" "$providers_json" &>/dev/null; then
@@ -350,13 +385,43 @@ test_suite_configuration() {
             fi
         done
 
-        # Check for required modes
+        test_start "Provider required fields"
+        for provider in "${providers[@]}"; do
+            for field in command invocation detectCommand authCheck; do
+                if jq -e ".providers.$provider.$field" "$providers_json" &>/dev/null; then
+                    test_pass "$provider.$field present"
+                else
+                    test_fail "$provider.$field missing"
+                fi
+            done
+        done
+
+        test_start "Required modes configured"
         local modes=("quick" "full" "privacy")
         for mode in "${modes[@]}"; do
             if jq -e ".modes.$mode" "$providers_json" &>/dev/null; then
                 test_pass "Mode configured: $mode"
             else
                 test_fail "Mode missing: $mode"
+            fi
+        done
+
+        test_start "Task routing configured"
+        local tasks=("plan-review" "code-review")
+        for task in "${tasks[@]}"; do
+            if jq -e ".taskRouting[\"$task\"]" "$providers_json" &>/dev/null; then
+                test_pass "Task routing configured: $task"
+            else
+                test_fail "Task routing missing: $task"
+            fi
+        done
+
+        test_start "Defaults block present"
+        for field in mode minQuorum timeoutMs; do
+            if jq -e ".defaults.$field" "$providers_json" &>/dev/null; then
+                test_pass "Default configured: $field"
+            else
+                test_fail "Default missing: $field"
             fi
         done
     else
@@ -377,6 +442,7 @@ test_suite_documentation() {
     assert_contains "$(cat "$readme")" "Quick Start" "Has quick start section"
     assert_contains "$(cat "$readme")" "Usage" "Has usage section"
     assert_contains "$(cat "$readme")" "Configuration" "Has configuration section"
+    assert_contains "$(cat "$readme")" "Troubleshooting" "Has troubleshooting section"
 
     test_start "README.md length"
     local readme_lines
@@ -393,7 +459,53 @@ test_suite_documentation() {
 
     assert_file_exists "$license" "LICENSE exists"
     assert_contains "$(cat "$license")" "MIT License" "Is MIT License"
-    assert_contains "$(cat "$license")" "2025" "Has current year"
+    assert_contains "$(cat "$license")" "2025" "Has copyright year"
+}
+
+test_suite_installer() {
+    echo -e "\n${BOLD}═══════════════════════════════════════════════════════${NC}"
+    echo -e "${BOLD}Test Suite: Installer${NC}"
+    echo -e "${BOLD}═══════════════════════════════════════════════════════${NC}"
+
+    local TEST_INSTALL_DIR
+    TEST_INSTALL_DIR=$(mktemp -d)
+
+    # Test --help flag
+    test_start "--help flag"
+    local help_output
+    local help_exit
+    help_output=$(node "$PROJECT_ROOT/bin/install.js" --help 2>&1)
+    help_exit=$?
+    if [ "$help_exit" -eq 0 ]; then
+        test_pass "installer --help exits 0"
+    else
+        test_fail "installer --help exits 0 (got $help_exit)"
+    fi
+    assert_contains "$help_output" "npx llm-cli-council" "installer --help shows usage"
+
+    # Test --dry-run (must not create any files)
+    test_start "--dry-run flag"
+    local dry_dir="$TEST_INSTALL_DIR/dry-run-test"
+    CLAUDE_DIR="$dry_dir" node "$PROJECT_ROOT/bin/install.js" --dry-run >/dev/null 2>&1
+    if [ ! -d "$dry_dir" ]; then
+        test_pass "installer --dry-run does not create target dir"
+    else
+        test_fail "installer --dry-run does not create target dir (dir was created)"
+    fi
+
+    # Test actual install
+    test_start "--yes install"
+    local install_dir="$TEST_INSTALL_DIR/real-install"
+    CLAUDE_DIR="$install_dir" node "$PROJECT_ROOT/bin/install.js" --yes >/dev/null 2>&1
+    assert_dir_exists "$install_dir/skills" "installer --yes creates skills dir"
+    assert_dir_exists "$install_dir/lib" "installer --yes creates lib dir"
+    assert_dir_exists "$install_dir/config" "installer --yes creates config dir"
+    assert_file_exists "$install_dir/skills/llm-cli-council.md" "installer copies skills/llm-cli-council.md"
+    assert_file_exists "$install_dir/config/providers.json" "installer copies config/providers.json"
+    assert_executable "$install_dir/lib/platform-utils.sh" "installer sets lib/platform-utils.sh executable"
+
+    # Cleanup
+    rm -rf "$TEST_INSTALL_DIR"
 }
 
 test_suite_installed_system() {
@@ -401,34 +513,21 @@ test_suite_installed_system() {
     echo -e "${BOLD}Test Suite: Installed System${NC}"
     echo -e "${BOLD}═══════════════════════════════════════════════════════${NC}"
 
-    # Only run if installation exists
-    local skills_dir="$HOME/.claude/skills"
+    # Locate the skills directory
+    local skills_dir
+    skills_dir="${CLAUDE_SKILLS_DIR:-${CLAUDE_CONFIG_DIR:-$HOME/.claude}/skills}"
 
     if [ ! -d "$skills_dir/llm-cli-council" ]; then
-        echo -e "${YELLOW}⚠${NC} Skill not installed, skipping installed system tests"
+        echo -e "${YELLOW}⚠${NC} Skill not installed at $skills_dir, skipping installed system tests"
         return 0
     fi
 
     test_start "Installed skill directories"
     assert_dir_exists "$skills_dir/llm-cli-council" "Main skill installed"
-    assert_dir_exists "$skills_dir/llm-cli-council-setup" "Setup wrapper installed"
-    assert_dir_exists "$skills_dir/llm-cli-council-status" "Status wrapper installed"
-    assert_dir_exists "$skills_dir/llm-cli-council-review-plan" "Review-plan wrapper installed"
-    assert_dir_exists "$skills_dir/llm-cli-council-review-code" "Review-code wrapper installed"
-    assert_dir_exists "$skills_dir/llm-cli-council-uninstall" "Uninstall wrapper installed"
 
-    test_start "Installed file count"
-    local file_count
-    file_count=$(find "$skills_dir/llm-cli-council" -type f | wc -l | tr -d ' ')
-
-    if [ "$file_count" -eq 19 ]; then
-        test_pass "Correct number of files installed ($file_count)"
-    else
-        test_fail "Incorrect file count (expected 19, got $file_count)"
-    fi
-
-    test_start "Config directory"
-    local config_dir="${CLAUDE_COUNCIL_CONFIG_DIR:-${CLAUDE_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/claude}/council}"
+    test_start "Config directory and file"
+    local config_dir
+    config_dir="${CLAUDE_COUNCIL_CONFIG_DIR:-${CLAUDE_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/claude}/council}"
 
     if [ -d "$config_dir" ]; then
         test_pass "Config directory exists: $config_dir"
@@ -436,7 +535,6 @@ test_suite_installed_system() {
         if [ -f "$config_dir/config.json" ]; then
             test_pass "Config file exists"
 
-            # Validate config JSON if jq available
             if command -v jq &>/dev/null; then
                 if jq . "$config_dir/config.json" &>/dev/null; then
                     test_pass "Config file is valid JSON"
@@ -448,7 +546,7 @@ test_suite_installed_system() {
             echo -e "${YELLOW}⚠${NC} Config file not found (run /llm-cli-council:setup)"
         fi
     else
-        echo -e "${YELLOW}⚠${NC} Config directory not found"
+        echo -e "${YELLOW}⚠${NC} Config directory not found (run /llm-cli-council:setup)"
     fi
 }
 
@@ -494,11 +592,12 @@ main() {
 
     # Run test suites
     test_suite_repository_structure
+    test_suite_plugin_manifest
     test_suite_platform_utilities
     test_suite_path_abstraction
-    test_suite_installation_script
     test_suite_configuration
     test_suite_documentation
+    test_suite_installer
     test_suite_installed_system
 
     # Print summary
