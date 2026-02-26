@@ -76,6 +76,30 @@ function copyFiles(claudeDir, dryRun) {
   return installed;
 }
 
+/**
+ * List of files (relative to claudeDir) that need chmod 755 after install.
+ * Shell scripts must be executable — fs.cpSync preserves source permissions
+ * on Linux but may not on all systems, so we set explicitly.
+ */
+const CHMOD_EXEC_FILES = [
+  'lib/platform-utils.sh',
+];
+
+/**
+ * Set executable permission on shell scripts.
+ * @param {string} claudeDir - Base Claude directory
+ * @param {boolean} dryRun   - If true, skip chmod
+ */
+function chmodExec(claudeDir, dryRun) {
+  if (dryRun) return;
+  for (const relPath of CHMOD_EXEC_FILES) {
+    const fullPath = path.join(claudeDir, relPath);
+    if (fs.existsSync(fullPath)) {
+      fs.chmodSync(fullPath, 0o755);
+    }
+  }
+}
+
 // Phase 2 Plan 02-03 adds: parseArgs(), confirm(), main()
 
 if (require.main === module) {
