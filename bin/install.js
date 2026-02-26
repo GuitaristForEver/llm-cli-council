@@ -134,10 +134,94 @@ function printHelp() {
   console.log('');
 }
 
-if (require.main === module) {
-  // Entry point — full logic in Plan 02-03
+/**
+ * Ask user a yes/no question. Returns true if yes.
+ * Skipped (returns true) if --yes flag or non-interactive (piped) stdin.
+ * @param {string} question
+ * @returns {Promise<boolean>}
+ */
+function confirm(question) {
+  return new Promise((resolve) => {
+    // Non-interactive (piped stdin) → auto-yes
+    if (!process.stdin.isTTY) {
+      resolve(true);
+      return;
+    }
+    const rl = require('readline').createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    rl.question(question + ' [y/N] ', (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes');
+    });
+  });
+}
+
+/**
+ * Main installer entry point.
+ */
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+
+  if (args.help) {
+    printHelp();
+    process.exit(0);
+  }
+
+  const pkg = require('../package.json');
   const claudeDir = detectClaudeDir();
-  console.log('llm-cli-council installer');
-  console.log('Claude dir: ' + claudeDir);
-  console.log('(Full installer coming in Plan 02-03)');
+
+  console.log('');
+  console.log('llm-cli-council v' + pkg.version + ' installer');
+  console.log('');
+
+  if (args.dryRun) {
+    console.log('DRY RUN — no files will be written');
+    console.log('');
+  }
+
+  console.log('Installing to: ' + claudeDir + '/');
+  console.log('');
+
+  // Show what will be installed
+  for (const entry of FILE_MAP) {
+    const destPath = path.join(claudeDir, entry.dest);
+    console.log('  → ' + destPath);
+  }
+  console.log('');
+
+  // Confirm unless --yes or dry-run
+  if (!args.yes && !args.dryRun) {
+    const ok = await confirm('Proceed with installation?');
+    if (!ok) {
+      console.log('Aborted.');
+      process.exit(0);
+    }
+    console.log('');
+  }
+
+  // Install
+  const installed = copyFiles(claudeDir, args.dryRun);
+  chmodExec(claudeDir, args.dryRun);
+
+  // Report results
+  for (const dest of installed) {
+    console.log('  ✓ ' + dest);
+  }
+  console.log('');
+
+  if (args.dryRun) {
+    console.log('Dry run complete. ' + installed.length + ' items would be installed.');
+  } else {
+    console.log('✅ Installed! Open Claude Code and run /llm-cli-council to get started.');
+  }
+  console.log('');
+}
+
+if (require.main === module) {
+  main().catch((err) => {
+    console.error('Installation failed: ' + err.message);
+    process.exit(1);
+  });
 }
