@@ -493,10 +493,10 @@ test_suite_installer() {
         test_fail "installer --dry-run does not create target dir (dir was created)"
     fi
 
-    # Test actual install
+    # Test actual install (--skip-detect avoids real LLM API calls in tests)
     test_start "--yes install"
     local install_dir="$TEST_INSTALL_DIR/real-install"
-    CLAUDE_DIR="$install_dir" node "$PROJECT_ROOT/bin/install.js" --yes >/dev/null 2>&1
+    CLAUDE_DIR="$install_dir" node "$PROJECT_ROOT/bin/install.js" --yes --skip-detect >/dev/null 2>&1
     assert_dir_exists "$install_dir/skills" "installer --yes creates skills dir"
     assert_dir_exists "$install_dir/lib" "installer --yes creates lib dir"
     assert_dir_exists "$install_dir/config" "installer --yes creates config dir"
